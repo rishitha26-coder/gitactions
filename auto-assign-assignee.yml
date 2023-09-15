@@ -1,0 +1,20 @@
+name: 'Auto assign assignees'
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  CI: true
+
+jobs:
+  auto-assign-assignee:
+    name: Auto assign assignee
+    runs-on: ubuntu-latest
+    steps:
+      - name: Assign author as assignee
+        uses: kentaro-m/auto-assign-action@v1.2.1
