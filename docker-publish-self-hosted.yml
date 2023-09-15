@@ -1,0 +1,50 @@
+name: Docker-Build-And-Publish
+
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+on:
+  release:
+    types: [ published ]
+  push:
+    branches:
+      [
+       dev, dev**, 
+       main, master,
+       staging, staging-**, staging/**,
+       qa, qa-**, qa/**,
+       demo, demo-**, demo/**,
+       training, training-**, training/**,
+       release-**, release**,
+       hotfix-**, hotfix**,
+       feature-**, feature/**,
+       prod-**, prod/**,
+       DO-**, do-**
+      ]
+    paths-ignore:
+      - '.github/workflows/docker-publish-self-hosted.yml'
+    tags:
+      [
+        'v*.*.*',
+        'qa-**', qa/**,
+        'release-**', release/**,
+        'hotfix-**', hotfix/**,
+        'dev-**', dev/**,
+        'demo-**', demo/**,
+        'training-**', training/**,
+        'staging-**', staging/**,
+        'prod**'
+      ]
+
+env:
+  # Use docker.io for Docker Hub if empty
+  REGISTRY: docker.io
+  # github.repository as <account>/<repo>
+  IMAGE_NAME: rishitha26/${{ github.event.repository.name }}
+
+jobs:
+  docker-build-and-publish:
+    uses: repo/.github/.github/workflows/docker-publish-self-hosted.yml@main
+    secrets: inherit    
