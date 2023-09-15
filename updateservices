@@ -1,0 +1,34 @@
+#!/bin/bash 
+
+list="affiliate_service feature/BE-127
+bank_service feature/BE-123
+card_service feature/BE-118
+crypto_exchange_service feature/BE-133
+crypto_service feature/BE-134
+goeasy_service feature/BE-125
+loan_service feature/BE-124
+member_service feature/BE-123
+mogo-soa_api feature/BE-115
+mortgage_service feature/BE-136
+operations_service feature/BE-121
+plaid_service feature/BE-132
+pungle_service feature/BE-131
+tdc_bridge_service feature/BE-126
+telesign_service feature/BE-128
+validation_service feature/BE-122"
+
+shopt -s extglob
+
+echo "$list" | while read line ; do 
+  service="${line% *}"
+  branch="${line#* }"
+  echo doing $service $branch
+  read
+  mkdir -p ~/repos/automations
+  cd ~/repos/automations
+  cd $service > /dev/null 2>&1 || git clone git@github.com:mogofinancial/${service}.git || continue
+  pwd
+  git checkout $branch
+  git pull
+  ${HOME}/repos/soa-helm-charts/scripts/somogoCommitDeploy.sh
+done
