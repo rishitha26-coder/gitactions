@@ -1,0 +1,59 @@
+name: Docker Deployment Workflow with AWS OIDC
+
+on:
+  push:
+    branches:
+      - test
+
+env:
+  AWS_REGION: 'us-east-1'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+          
+      - name: Install linting dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pylint
+
+      - name: Run lint checks
+        run: |
+          # Run flake8
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Run pylint
+          pylint $(git ls-files '*.py')
+
+      - name: Create PR to Production
+        if: success() && github.ref == 'refs/heads/test'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Install GitHub CLI if not already installed
+          type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+          && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+          && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+          && sudo apt update \
+          && sudo apt install gh -y
+
+          # Create PR to main (production)
+          gh pr create \
+            --base main \
+            --head test \
+            --title "Deploy to Production" \
+            --body "Automated PR: Deploy tested changes to production environment" \
+            --label "deploy,production" || true
